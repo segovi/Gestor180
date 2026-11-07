@@ -1,0 +1,251 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi tienda | Catálogo y compras</title>
+<style>
+:root{--primary:#243b53;--accent:#e07a5f;--bg:#f4f6f8;--text:#24313d}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+header{background:var(--primary);color:white;padding:22px 5%;display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}
+header h1{font-size:1.4rem;margin:0}.tabs{display:flex;gap:8px;flex-wrap:wrap}
+button{border:0;border-radius:8px;padding:10px 15px;cursor:pointer;font-weight:700;background:var(--accent);color:white}
+button.secondary{background:#526777}button.danger{background:#b23b3b}button:disabled{opacity:.45;cursor:not-allowed}
+.tabs button{background:#526777}.tabs button.active{background:var(--accent)}
+main{max-width:1150px;margin:25px auto;padding:0 16px}.panel{background:white;padding:22px;border-radius:13px;box-shadow:0 3px 14px #172b4d12;margin-bottom:20px}
+h2{margin-top:0;font-size:1.25rem}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
+label{display:block;font-weight:700;margin:12px 0 6px}input,textarea{width:100%;padding:11px;border:1px solid #ccd3da;border-radius:8px;font:inherit}
+textarea{min-height:75px;resize:vertical}.muted{color:#667784;font-size:.9rem}
+.product{border:1px solid #e1e6eb;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;background:white}
+.product img{width:100%;height:175px;object-fit:cover;background:#edf0f2}.product-info{padding:14px;display:flex;flex-direction:column;gap:8px;flex:1}
+.price{font-size:1.2rem;font-weight:800;color:#16704a}.stock{font-size:.88rem;color:#586874}.product-info button{margin-top:auto}
+.hidden{display:none!important}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.row>*{flex:1}
+table{width:100%;border-collapse:collapse;margin-top:12px}th,td{text-align:left;padding:11px 8px;border-bottom:1px solid #e4e8ec}th{background:#f5f7f9}
+.qty{width:75px;padding:7px}.total{text-align:right;font-size:1.25rem;font-weight:800;margin:18px 0}
+#invoice{max-width:760px;margin:20px auto;background:white;padding:30px;border:1px solid #dce2e8}
+.invoice-head{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;border-bottom:2px solid #243b53;padding-bottom:15px}
+.notice{padding:12px;background:#fff4df;border-radius:8px;margin-top:12px}
+
+#customerForm label{display:block;font-weight:700;margin:12px 0 6px}
+#customerForm input{width:100%;padding:11px;border:1px solid #ccd3da;border-radius:8px;font:inherit}
+.sale-entry{padding:12px 0;border-bottom:1px solid #e4e8ec;line-height:1.6}
+.sale-entry:last-child{border-bottom:0}
+
+@media print{
+  body{background:white;margin:0;padding:0}
+  header,.panel,.no-print,.tabs{display:none!important}
+  main{margin:0;padding:0;max-width:none}
+  #invoice{display:block!important;border:0;margin:0;padding:15px;max-width:none;width:100%}
+  #invoice button{display:none!important}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1 id="storeTitle">Mi tienda</h1>
+  <nav class="tabs">
+    <button class="active" data-tab="compras">Compras / carrito</button>
+    <button data-tab="configuracion">Configurar productos</button>
+  </nav>
+</header>
+<main>
+<section id="compras">
+  <div class="panel">
+    <h2>Catálogo de productos</h2>
+    <p class="muted">Elegí los productos y agregalos al carrito. El stock se controla al confirmar la compra.</p>
+    <div id="catalogo" class="grid"></div>
+    <p id="emptyCatalog" class="muted">Todavía no hay productos cargados. Entrá en “Configurar productos” para agregar el primero.</p>
+  </div>
+  <div class="panel">
+    <h2>Mi carrito</h2>
+    <div id="cartArea"><p class="muted">El carrito está vacío.</p></div>
+    <div class="total" id="cartTotal">Total: $ 0,00</div>
+    <div class="row">
+      <button id="checkoutBtn" disabled>Confirmar compra y emitir factura</button>
+      <button class="secondary" id="clearCartBtn">Vaciar carrito</button>
+    </div>
+  </div>
+
+  <div class="panel" id="customerPanel">
+    <h2>Datos del cliente</h2>
+    <p class="muted">Completá todos los campos para confirmar la compra.</p>
+    <form id="customerForm" class="grid">
+      <div><label for="customerName">Nombre y apellido *</label><input id="customerName" name="customerName" required autocomplete="name"></div>
+      <div><label for="customerDni">DNI *</label><input id="customerDni" name="customerDni" required inputmode="numeric"></div>
+      <div><label for="customerAddress">Domicilio *</label><input id="customerAddress" name="customerAddress" required autocomplete="street-address"></div>
+      <div><label for="customerEmail">Correo electrónico *</label><input id="customerEmail" name="customerEmail" type="email" required autocomplete="email"></div>
+      <div><label for="customerPhone">Número de celular *</label><input id="customerPhone" name="customerPhone" type="tel" required autocomplete="tel"></div>
+    </form>
+    <p class="muted">El formulario se valida al presionar “Confirmar compra y emitir factura”.</p>
+  </div>
+  <div class="panel" id="salesHistory">
+    <h2>Historial de ventas</h2>
+    <div id="salesHistoryList"><p class="muted">Todavía no hay ventas registradas.</p></div>
+  </div>
+  <section id="invoice" class="hidden">
+    <div class="invoice-head">
+      <div><h2>FACTURA / COMPROBANTE</h2><strong id="invoiceStore">Mi tienda</strong><p class="muted">Comprobante interno de compra</p></div>
+      <div><strong>N.º <span id="invoiceNumber"></span></strong><p>Fecha: <span id="invoiceDate"></span></p></div>
+    </div>
+    <div id="invoiceCustomer" style="margin:20px 0"></div>
+    <table><thead><tr><th>Producto</th><th>Cantidad</th><th>Precio unitario</th><th>Subtotal</th></tr></thead><tbody id="invoiceRows"></tbody></table>
+    <div class="total" id="invoiceTotal"></div>
+    <p class="muted">Este documento es un comprobante interno y no reemplaza una factura fiscal electrónica de ARCA.</p>
+    <div class="no-print row"><button onclick="window.print()">Imprimir / Guardar como PDF</button><button class="secondary" id="newSaleBtn">Nueva compra</button></div>
+  </section>
+</section>
+
+<section id="configuracion" class="hidden">
+  <div class="panel">
+    <h2>Configurar tienda</h2>
+    <label for="storeName">Nombre de la tienda</label>
+    <input id="storeName" placeholder="Ej.: ÁngelDS">
+    <button id="saveStoreBtn" style="margin-top:12px">Guardar nombre</button>
+  </div>
+  <div class="panel">
+    <h2 id="formTitle">Cargar un producto</h2>
+    <form id="productForm">
+      <input type="hidden" id="productId">
+      <div class="grid">
+        <div><label for="productName">Nombre del producto *</label><input id="productName" required placeholder="Ej.: Zapatillas"></div>
+        <div><label for="productPrice">Precio en pesos ($) *</label><input id="productPrice" type="number" min="0.01" step="0.01" required placeholder="Ej.: 25000"></div>
+        <div><label for="productStock">Cantidad en stock *</label><input id="productStock" type="number" min="0" step="1" required placeholder="Ej.: 10"></div>
+        <div><label for="productPhoto">Foto del producto</label><input id="productPhoto" type="file" accept="image/*"><span class="muted">Formatos de imagen habituales. La foto se guarda en este navegador.</span></div>
+      </div>
+      <label for="productDetail">Detalle / descripción</label><textarea id="productDetail" placeholder="Talle, color, características, etc."></textarea>
+      <div class="row" style="margin-top:15px"><button type="submit">Guardar producto</button><button type="button" class="secondary" id="cancelEditBtn">Limpiar formulario</button></div>
+    </form>
+  </div>
+  <div class="panel">
+    <h2>Productos cargados</h2>
+    <div id="adminProducts"></div>
+    <p class="muted">Los datos quedan guardados en el navegador y dispositivo donde se usa esta página. Exportá una copia de seguridad si vas a cambiar de equipo.</p>
+    <button class="secondary" id="exportBtn">Exportar datos (JSON)</button>
+  </div>
+</section>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const money = n => '$ ' + Number(n || 0).toLocaleString('es-AR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const read = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } };
+let products = read('tienda_products', []);
+let cart = [];
+let storeName = localStorage.getItem('tienda_name') || 'Mi tienda';
+let nextInvoice = Number(localStorage.getItem('tienda_invoice') || 1);
+let sales = read('tienda_sales', []);
+function saveSales(){localStorage.setItem('tienda_sales',JSON.stringify(sales));}
+function renderSalesHistory(){
+  const host=$('salesHistoryList');
+  if(!host)return;
+  if(!sales.length){host.innerHTML='<p class="muted">Todavía no hay ventas registradas.</p>';return;}
+  host.innerHTML=[...sales].reverse().map(s=>`<div class="sale-entry">
+    <strong>Comprobante N.º ${esc(s.invoice)}</strong> · ${esc(s.date)}<br>
+    Cliente: ${esc(s.customer.name)} · DNI: ${esc(s.customer.dni)}<br>
+    Importe: <strong>${money(s.total)}</strong>
+  </div>`).join('');
+}
+$('storeTitle').textContent = storeName;
+$('storeName').value = storeName;
+
+document.querySelectorAll('[data-tab]').forEach(btn => btn.addEventListener('click', () => {
+  document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b===btn));
+  $('compras').classList.toggle('hidden',btn.dataset.tab!=='compras');
+  $('configuracion').classList.toggle('hidden',btn.dataset.tab!=='configuracion');
+  $('invoice').classList.add('hidden');
+  render();
+}));
+function save(){localStorage.setItem('tienda_products',JSON.stringify(products));}
+function render(){
+  $('catalogo').innerHTML = products.map(p=>`<article class="product">
+    <img src="${p.photo || ''}" alt="${esc(p.name)}" onerror="this.style.display='none'">
+    <div class="product-info"><strong>${esc(p.name)}</strong><span>${esc(p.detail || '')}</span>
+    <span class="price">${money(p.price)}</span><span class="stock">Stock disponible: ${p.stock}</span>
+    <button onclick="addToCart('${p.id}')" ${p.stock<1?'disabled':''}>Agregar al carrito</button></div></article>`).join('');
+  $('emptyCatalog').classList.toggle('hidden',products.length>0);
+  $('adminProducts').innerHTML = products.length ? `<table><thead><tr><th>Producto</th><th>Precio</th><th>Stock</th><th>Acciones</th></tr></thead><tbody>${products.map(p=>`<tr><td>${esc(p.name)}</td><td>${money(p.price)}</td><td>${p.stock}</td><td><button class="secondary" onclick="editProduct('${p.id}')">Editar</button> <button class="danger" onclick="deleteProduct('${p.id}')">Eliminar</button></td></tr>`).join('')}</tbody></table>` : '<p class="muted">No hay productos cargados.</p>';
+  renderCart();
+}
+function renderCart(){
+  const area=$('cartArea');
+  if(!cart.length){area.innerHTML='<p class="muted">El carrito está vacío.</p>';$('checkoutBtn').disabled=true;$('cartTotal').textContent='Total: '+money(0);return;}
+  area.innerHTML=`<table><thead><tr><th>Producto</th><th>Precio</th><th>Cantidad</th><th>Subtotal</th><th></th></tr></thead><tbody>${cart.map(c=>{let p=products.find(x=>x.id===c.id);return p?`<tr><td>${esc(p.name)}</td><td>${money(p.price)}</td><td><input class="qty" type="number" min="1" max="${p.stock}" value="${c.qty}" onchange="setQty('${p.id}',this.value)"></td><td>${money(p.price*c.qty)}</td><td><button class="danger" onclick="removeCart('${p.id}')">Quitar</button></td></tr>`:''}).join('')}</tbody></table>`;
+  const total=cart.reduce((s,c)=>{let p=products.find(x=>x.id===c.id);return s+(p?p.price*c.qty:0)},0);
+  $('cartTotal').textContent='Total: '+money(total);$('checkoutBtn').disabled=!cart.length;
+}
+function addToCart(id){let p=products.find(x=>x.id===id);if(!p||p.stock<1)return;let c=cart.find(x=>x.id===id);if(c){if(c.qty>=p.stock){alert('No hay más unidades disponibles.');return;}c.qty++;}else cart.push({id,qty:1});renderCart();}
+function setQty(id,value){let p=products.find(x=>x.id===id),q=Math.floor(Number(value));if(!p)return;if(!Number.isFinite(q)||q<1)q=1;if(q>p.stock){q=p.stock;alert('La cantidad supera el stock disponible.');}let c=cart.find(x=>x.id===id);if(c)c.qty=q;renderCart();}
+function removeCart(id){cart=cart.filter(x=>x.id!==id);renderCart();}
+$('clearCartBtn').onclick=()=>{cart=[];renderCart();};
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+$('productForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const id=$('productId').value || (crypto.randomUUID?crypto.randomUUID():String(Date.now()));
+  const old=products.find(p=>p.id===id);
+  const file=$('productPhoto').files[0];
+  let photo=old?.photo || '';
+  if(file){if(file.size>2*1024*1024){alert('La foto debe pesar menos de 2 MB.');return;}photo=await new Promise((resolve,reject)=>{let r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(file);});}
+  const p={id,name:$('productName').value.trim(),detail:$('productDetail').value.trim(),price:Number($('productPrice').value),stock:Math.floor(Number($('productStock').value)),photo};
+  if(!p.name||p.price<=0||p.stock<0){alert('Revisá el nombre, precio y stock.');return;}
+  if(old)products=products.map(x=>x.id===id?p:x);else products.push(p);
+  save();$('productForm').reset();$('productId').value='';$('formTitle').textContent='Cargar un producto';render();alert('Producto guardado correctamente.');
+});
+function editProduct(id){let p=products.find(x=>x.id===id);if(!p)return;$('productId').value=p.id;$('productName').value=p.name;$('productDetail').value=p.detail;$('productPrice').value=p.price;$('productStock').value=p.stock;$('formTitle').textContent='Editar producto';window.scrollTo({top:0,behavior:'smooth'});}
+function deleteProduct(id){if(!confirm('¿Eliminar este producto?'))return;products=products.filter(p=>p.id!==id);cart=cart.filter(c=>c.id!==id);save();render();}
+$('cancelEditBtn').onclick=()=>{$('productForm').reset();$('productId').value='';$('formTitle').textContent='Cargar un producto';};
+$('saveStoreBtn').onclick=()=>{storeName=$('storeName').value.trim()||'Mi tienda';localStorage.setItem('tienda_name',storeName);$('storeTitle').textContent=storeName;alert('Nombre guardado.');};
+$('checkoutBtn').onclick=()=>{
+  if(!cart.length){alert('El carrito está vacío.');return;}
+  const form=$('customerForm');
+  if(!form.reportValidity()){return;}
+  const customer={
+    name:$('customerName').value.trim(),
+    dni:$('customerDni').value.trim(),
+    address:$('customerAddress').value.trim(),
+    email:$('customerEmail').value.trim(),
+    phone:$('customerPhone').value.trim()
+  };
+  if(Object.values(customer).some(v=>!v)){alert('Completá todos los datos del cliente.');return;}
+  for(const c of cart){
+    const p=products.find(x=>x.id===c.id);
+    if(!p||p.stock<c.qty){alert('El stock cambió. Revisá el carrito.');render();return;}
+  }
+  const invoiceNumber=String(nextInvoice).padStart(6,'0');
+  const date=new Date().toLocaleString('es-AR');
+  const saleItems=cart.map(c=>{
+    const p=products.find(x=>x.id===c.id);
+    p.stock-=c.qty;
+    return {name:p.name,price:Number(p.price),qty:Number(c.qty),subtotal:Number(p.price)*Number(c.qty)};
+  });
+  const total=saleItems.reduce((sum,x)=>sum+x.subtotal,0);
+  save();
+  $('invoiceStore').textContent=storeName;
+  $('invoiceNumber').textContent=invoiceNumber;
+  $('invoiceDate').textContent=date;
+  $('invoiceCustomer').innerHTML=`
+    <p><strong>Nombre y apellido:</strong> ${esc(customer.name)}</p>
+    <p><strong>DNI:</strong> ${esc(customer.dni)} · <strong>Domicilio:</strong> ${esc(customer.address)}</p>
+    <p><strong>Correo electrónico:</strong> ${esc(customer.email)} · <strong>Celular:</strong> ${esc(customer.phone)}</p>`;
+  $('invoiceRows').innerHTML=saleItems.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.qty}</td><td>${money(x.price)}</td><td>${money(x.subtotal)}</td></tr>`).join('');
+  $('invoiceTotal').textContent='TOTAL: '+money(total);
+  sales.push({invoice:invoiceNumber,date,customer,items:saleItems,total});
+  saveSales();
+  renderSalesHistory();
+  nextInvoice++;
+  localStorage.setItem('tienda_invoice',String(nextInvoice));
+  cart=[];
+  form.reset();
+  render();
+  $('invoice').classList.remove('hidden');
+  $('invoice').scrollIntoView({behavior:'smooth'});
+};
+$('newSaleBtn').onclick=()=>{$('invoice').classList.add('hidden');window.scrollTo({top:0,behavior:'smooth'});};
+$('exportBtn').onclick=()=>{const blob=new Blob([JSON.stringify({storeName,products,sales,nextInvoice},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='respaldo-tienda.json';a.click();URL.revokeObjectURL(a.href);};
+render();
+renderSalesHistory();
+</script>
+</body>
+</html>
+```eof
+
+He actualizado el archivo con la regla de impresión corregida. Ahora, al hacer clic en **"Imprimir / Guardar como PDF"**, la factura se desplegará con todos sus datos y se ocultarán los paneles e interfaces sobrantes del sitio web. 
