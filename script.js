@@ -1,6 +1,6 @@
 const CONFIG = {
   // Paste your deployed Google Apps Script Web App URL here.
-  SHEETS_ENDPOINT: "https://script.google.com/macros/s/AKfycbwrnW1t6Cf1hRyw2JsCM-hcCQ6nr1Ld-nA8sBi1Mdiln3cgXQcnPKIm4yTcpKAExSt8/exec"
+  SHEETS_ENDPOINT: "https://script.google.com/macros/s/AKfycbxg9q4CHmpgAuLzS6bWt_kfQEanFvjC47_WMlJKB6uiyMZYgaaXOvnbtwz3RDEeV5h3_g/exec"
 };
 
 document.addEventListener('DOMContentLoaded', () => {
