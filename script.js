@@ -1,6 +1,8 @@
 const CONFIG = {
   // Paste your deployed Google Apps Script Web App URL here.
-  SHEETS_ENDPOINT: "PEGÁ_AQUÍ_TU_URL_DE_APPS_SCRIPT"
+  SHEETS_ENDPOINT: "https://script.google.com/macros/s/AKfycbxRb7nlRgLgYsTL9dYCobkfSlyXHp1RMPK7C6ju0XYpPGK7JhN-aZxaVMd9ggzc03CoEA/exec
+
+"
 };
 
 document.addEventListener('DOMContentLoaded', () => {
