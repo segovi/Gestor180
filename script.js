@@ -1,59 +1,34 @@
-const CONFIG = {
-  // Pega aquí tu URL desplegada de Google Apps Script
-  SHEETS_ENDPOINT: "https://script.google.com/macros/s/AKfycbxg9q4CHmpgAuLzS6bWt_kfQEanFvjC47_WMlJKB6uiyMZYgaaXOvnbtwz3RDEeV5h3_g/exec"
-};
+const SHEET_NAME = 'Consultas';
 
-document.addEventListener('DOMContentLoaded', () => {
-  const menuBtn = document.querySelector('.menu-btn');
-  const navLinks = document.querySelector('.nav-links');
-  if (menuBtn && navLinks) {
-    menuBtn.addEventListener('click', () => navLinks.classList.toggle('open'));
+function doPost(e) {
+  try {
+    var SHEET_ID = 'https://script.google.com/macros/s/AKfycbxUPhHwhGTeX-2-YM71egp4Cg2qNrkUD_Sp_5gXdMpfdSrTLtP33SE4DWO9tkCz2ZonLA/exec';
+    var sheet = SpreadsheetApp.openById(SHEET_ID).getSheetByName("Hoja 1"); // Cambia por el nombre real de tu pestaña si es necesario
+    
+    var data = {};
+    
+    // Soporta tanto JSON como parámetros de formulario enviados por fetch
+    if (e.postData && e.postData.type === "application/json") {
+      data = JSON.parse(e.postData.contents);
+    } else if (e.parameter) {
+      data = e.parameter;
+    } else {
+      data = JSON.parse(e.postData.contents);
+    }
+
+    sheet.appendRow([
+      new Date(),
+      data.nombre || '',
+      data.telefono || '',
+      data.email || '',
+      data.mensaje || '',
+      data.origen || ''
+    ]);
+
+    return ContentService.createTextOutput(JSON.stringify({ "result": "success" }))
+           .setMimeType(ContentService.MimeType.JSON);
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({ "result": "error", "error": error.toString() }))
+           .setMimeType(ContentService.MimeType.JSON);
   }
-
-  const form = document.querySelector('#contactForm');
-  const status = document.querySelector('#formStatus');
-  if (!form) return;
-
-  // Buscamos el botón dentro del formulario
-  const submitBtn = form.querySelector('button[type="submit"]');
-
-  form.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const data = Object.fromEntries(new FormData(form).entries());
-
-    if (CONFIG.SHEETS_ENDPOINT.includes('PEGÁ_')) {
-      status.textContent = 'Formulario listo. Configura la URL de Google Sheets en script.js.';
-      return;
-    }
-
-    // 1. Deshabilitar botón y mostrar estado de carga
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Enviando consulta...';
-    }
-    status.textContent = 'Enviando...';
-    status.className = 'status sending';
-
-    try {
-      await fetch(CONFIG.SHEETS_ENDPOINT, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'},
-        body: new URLSearchParams({...data, origen:'sitio-web'})
-      });
-
-      form.reset();
-      status.textContent = '¡Gracias! Tu consulta fue enviada con éxito.';
-      status.className = 'status success';
-    } catch (error) {
-      status.textContent = 'No se pudo enviar. Revisa la configuración de Google Sheets.';
-      status.className = 'status error';
-    } finally {
-      // 2. Restaurar el botón al terminar (exitoso o fallido)
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Enviar consulta';
-      }
-    }
-  });
-});
+}
